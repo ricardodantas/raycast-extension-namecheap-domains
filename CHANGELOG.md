@@ -1,28 +1,11 @@
 # Namecheap Domains Changelog
 
-## [Pricing and Privacy Fixes] - 2026-09-11
+## [Initial Version] - {PR_MERGE_DATE}
 
-- Fixed pricing never loading: live responses label the product type "domains", where the documentation example says "DOMAIN"
-- Fixed domains being quoted at $0.00 when Namecheap returns an empty or zero Price alongside a real YourPrice or RegularPrice
-- Domain names are no longer sent to a favicon service, so nothing about your portfolio leaves the machine
-- Clear Stored Data is now reachable from every command, not only from error screens
-
-## [Safety and Setup] - 2026-09-11
-
-- API requests now use POST, so the API key is no longer placed in a URL where a proxy or CDN could log it
-- Your domain list is kept in Raycast's encrypted storage instead of the plaintext cache
-- Availability searches are no longer written to disk
-- Added a Clear Stored Data action, and documented everything the extension stores and sends
-
-- Added a setup guide shown next to the preferences form, covering how to enable API access and whitelist an IP
-- A rejected IP is now named on screen, with an action that copies it and opens the right Namecheap page
-- Setup links follow the Sandbox preference instead of always opening the production account
-- A failed refresh no longer leaves a stale domain list on screen with no explanation
-- Corrected the guidance for rejected IPs, which wrongly suggested the Client IP preference could fix it
-- New icon: a white ribbon N on orange, echoing Namecheap's mark
-
-## [Initial Version] - 2026-09-11
-
-- List Domains: browse the domains in your Namecheap account with expiry, auto-renew, privacy and lock status, and open the management page with Enter
-- Check Domain Availability: check a full domain, or a keyword across your default TLDs, with registration pricing and premium detection
-- Register Domain: verify availability and price, then continue to Namecheap checkout
+- **List Domains**: browse the domains in your Namecheap account with expiry date, auto-renew, privacy and lock status, filter by All, Expiring or Expired, and open a domain's management page with Enter
+- **Check Domain Availability**: check a full domain, or a keyword across your default TLDs in one call, with registration pricing and premium detection
+- **Register Domain**: verify availability and price, then continue to Namecheap checkout in your browser
+- Setup guidance appears beside the preferences form, covering how to enable API access and whitelist an IP address
+- When Namecheap rejects an address, the extension names it on screen and offers to copy it and open the right page, following your Sandbox preference
+- A failed refresh keeps showing the domains that last loaded, rather than an empty list
+- Sandbox support for accounts that do not yet meet Namecheap's production API requirements

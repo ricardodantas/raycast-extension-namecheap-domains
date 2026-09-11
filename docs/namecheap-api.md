@@ -65,6 +65,21 @@ An element that repeats once parses as a single object and twice as an array, so
 
 The parser is configured against hostile input, verified: external entities are rejected, entity expansion does not blow up, and deep nesting hits a depth cap. Non-XML bodies matter in practice because a CDN fronts the API and answers with HTML for 403 and 429, so a non-2xx response that fails to parse is reported with its status rather than as a parse error.
 
+## Pricing responses differ from the documented example
+
+Two divergences, both confirmed against the response captured in Namecheap's own Go SDK
+(`namecheaptest/fixtures/users_getPricing.xml`). Each one silently produced wrong output here, so
+`tests/pricing-live-shape.test.ts` pins both against that fixture.
+
+The product type comes back as `domains`, where the documentation example shows `DOMAIN`. Matching the
+documented spelling skips every product and yields an empty price table with a 200 OK, so nothing surfaces
+as an error.
+
+Price rows carry placeholder figures. A row can read `Price="0.0"` with `YourPrice="10.50"`, or `Price=""`
+with `YourPrice="0.00"` and `RegularPrice="9.18"`. Taking the first value that is *present* quotes those
+domains at nothing, so `parsePricing` takes the first value that is *positive* across Price, YourPrice and
+RegularPrice, which is what Namecheap's own SDK does.
+
 ## Availability has no price signal
 
 `domains.check` reports whether a registration record exists. Premium names come back available with a premium price attached, and pricing for ordinary names comes from `users.getPricing`, which Namecheap asks callers to cache. The extension caches it for a day.

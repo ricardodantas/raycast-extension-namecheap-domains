@@ -57,14 +57,14 @@ The address changes when you switch network or turn on a VPN, which breaks API a
 
 ## What the extension stores and sends
 
-- **Your API key** is held by Raycast as a password preference, in its encrypted store. The extension sends it to `api.namecheap.com` only, in the body of a POST request, so it never appears in a URL that a proxy or CDN could log.
+- **Your API key** is held by Raycast as a password preference, in its encrypted store. The extension sends it to Namecheap's API only (`api.namecheap.com`, or `api.sandbox.namecheap.com` in sandbox mode), in the body of a POST request, so it never appears in a URL that a proxy or CDN could log.
 - **Your domain list** is kept in Raycast's encrypted storage, as a snapshot so the command still shows something when a refresh fails. It is never written to the plaintext cache.
 - **What you search for** in Check Domain Availability stays in memory for the session and is not written to disk.
 - **TLD pricing** is cached on disk for a day, as Namecheap asks API users to do. It is the same public price list for everyone.
 - **Your public IP** is looked up from `api.ipify.org`, falling back to `checkip.amazonaws.com`, when the Client IP preference is blank. Those services receive nothing but the request itself. Set the preference to skip the lookup entirely.
 - **Nothing else leaves your machine.** There is no analytics or telemetry, and domain names are not sent to any favicon or preview service.
 
-**Clear Stored Data** in any command's action panel wipes all of it.
+**Clear Stored Data**, in the action panel of List Domains or Check Domain Availability, wipes all of it.
 
 The extension never spends money. Registration always finishes in your browser on namecheap.com, and no command calls Namecheap's purchase endpoints.
 
@@ -75,7 +75,7 @@ npm install
 npm run dev      # loads the extension into Raycast (requires the Raycast app)
 npm run build    # production build + type check
 npm run lint     # ray lint
-npm test         # unit tests for parsing and domain normalization
+npm test         # unit tests: parsing, pricing shapes, domain normalization, error handling
 npm run typecheck # type-checks src, tests and scripts together
 ```
 
