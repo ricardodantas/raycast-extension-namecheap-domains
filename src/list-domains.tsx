@@ -14,7 +14,8 @@ import { useMemo, useState } from "react";
 import { useDomains } from "./hooks";
 import { isSandbox } from "./preferences";
 import { advancedDnsUrl, domainListUrl, managementUrl, websiteUrl, whoisUrl } from "./namecheap/urls";
-import { isWhitelistError, SetupActions, SetupEmptyView, useWhitelistIp } from "./setup";
+import { isWhitelistError } from "./domain/failure";
+import { SetupActions, SetupEmptyView, useWhitelistIp } from "./setup";
 import { clearStoredData } from "./storage";
 import type { Domain, DomainListType } from "./namecheap/types";
 

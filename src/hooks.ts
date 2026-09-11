@@ -1,7 +1,7 @@
 import { usePromise } from "@raycast/utils";
 import { useCallback, useRef, useState } from "react";
 import { showNamecheapError } from "./errors";
-import { clearPricingCache, currentEnvironment, getClient, getPricing } from "./preferences";
+import { clearPricingCache, currentScope, getClient, getPricing } from "./preferences";
 import { readDomainSnapshot, writeDomainSnapshot } from "./storage";
 import type { Domain, DomainCheckResult, DomainListType, PricingTable } from "./namecheap/types";
 
@@ -21,7 +21,7 @@ export function useDomains(listType: DomainListType) {
     async (type: DomainListType) => {
       const client = await getClient();
       const domains = await client.listAllDomains({ listType: type });
-      await writeDomainSnapshot(client.environment, type, domains);
+      await writeDomainSnapshot(currentScope(), type, domains);
       return domains;
     },
     [listType],
@@ -29,7 +29,7 @@ export function useDomains(listType: DomainListType) {
       onData: () => setSnapshot(null),
       onError: async (error) => {
         showNamecheapError(error, "Could not load your domains");
-        setSnapshot((await readDomainSnapshot(currentEnvironment(), listType)) ?? null);
+        setSnapshot((await readDomainSnapshot(currentScope(), listType)) ?? null);
       },
     },
   );

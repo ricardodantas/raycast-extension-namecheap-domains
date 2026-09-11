@@ -11,7 +11,7 @@ import {
   Toast,
 } from "@raycast/api";
 import { usePromise } from "@raycast/utils";
-import { errorHint, errorMessage } from "./errors";
+import { errorHint, errorMessage, isWhitelistError, recoveryFor } from "./domain/failure";
 import { NamecheapApiError } from "./namecheap/parse";
 import { API_INTRO_URL, whitelistUrl } from "./namecheap/urls";
 import { isSandbox, resolveClientIp } from "./preferences";
@@ -32,49 +32,63 @@ export function useWhitelistIp(error?: unknown): { ip: string | undefined; isAut
   return { ip: fromError ?? detected, isAuthoritative: Boolean(fromError) };
 }
 
-/** True when Namecheap rejected the address the request came from. */
-export const isWhitelistError = (error: unknown): error is NamecheapApiError =>
-  error instanceof NamecheapApiError && error.isWhitelistError;
-
 function environmentOf(error: unknown): boolean {
   return error instanceof NamecheapApiError && error.environment ? error.environment === "sandbox" : isSandbox();
 }
 
-/** Copy the address, open the right whitelist page, then retry. Shared by every failure screen. */
+/**
+ * Recovery actions for a failure screen, ordered by what would actually fix it. The whitelist action only
+ * appears for a whitelist rejection: offering it for a bad API key or a dropped connection points the user
+ * at a page that cannot help them.
+ */
 export function SetupActions({ error, onRetry }: { error?: unknown; onRetry?: () => void }) {
   const { ip } = useWhitelistIp(error);
   const sandbox = environmentOf(error);
+  const recovery = recoveryFor(error);
 
-  return (
-    <>
-      <Action
-        title="Copy IP and Open Namecheap"
-        icon={Icon.Clipboard}
-        onAction={async () => {
-          if (ip) await Clipboard.copy(ip);
-          await open(whitelistUrl(sandbox));
-          await showToast({
-            style: Toast.Style.Success,
-            title: ip ? `Copied ${ip}` : "Opened Namecheap API access",
-            message: "Add it under Whitelisted IPs, then come back and try again",
-          });
-        }}
-      />
-      {ip ? <Action.CopyToClipboard title="Copy IP Address" content={ip} /> : null}
-      {onRetry ? <Action title="Try Again" icon={Icon.ArrowClockwise} onAction={onRetry} /> : null}
-      <Action.OpenInBrowser title="Read the Setup Guide" icon={Icon.Book} url={API_INTRO_URL} />
-      <Action
-        title="Clear Stored Data"
-        icon={Icon.Trash}
-        style={Action.Style.Destructive}
-        onAction={async () => {
-          await clearStoredData();
-          await showToast({ style: Toast.Style.Success, title: "Cleared stored data" });
-        }}
-      />
-      <Action title="Open Extension Preferences" icon={Icon.Gear} onAction={openExtensionPreferences} />
-    </>
+  const whitelist = (
+    <Action
+      key="whitelist"
+      title="Copy IP and Open Namecheap"
+      icon={Icon.Clipboard}
+      onAction={async () => {
+        if (ip) await Clipboard.copy(ip);
+        await open(whitelistUrl(sandbox));
+        await showToast({
+          style: Toast.Style.Success,
+          title: ip ? `Copied ${ip}` : "Opened Namecheap API access",
+          message: "Add it under Whitelisted IPs, then come back and try again",
+        });
+      }}
+    />
   );
+  const copyIp = ip ? <Action.CopyToClipboard key="copy-ip" title="Copy IP Address" content={ip} /> : null;
+  const retry = onRetry ? <Action key="retry" title="Try Again" icon={Icon.ArrowClockwise} onAction={onRetry} /> : null;
+  const preferences = (
+    <Action key="preferences" title="Open Extension Preferences" icon={Icon.Gear} onAction={openExtensionPreferences} />
+  );
+  const guide = <Action.OpenInBrowser key="guide" title="Read the Setup Guide" icon={Icon.Book} url={API_INTRO_URL} />;
+  const clear = (
+    <Action
+      key="clear"
+      title="Clear Stored Data"
+      icon={Icon.Trash}
+      style={Action.Style.Destructive}
+      onAction={async () => {
+        await clearStoredData();
+        await showToast({ style: Toast.Style.Success, title: "Cleared stored data" });
+      }}
+    />
+  );
+
+  const ordered =
+    recovery === "whitelist"
+      ? [whitelist, copyIp, retry, preferences, guide, clear]
+      : recovery === "preferences"
+        ? [preferences, retry, guide, clear]
+        : [retry, preferences, guide, clear];
+
+  return <>{ordered.filter(Boolean)}</>;
 }
 
 /**
@@ -120,6 +134,7 @@ export function SetupEmptyView({ error, onRetry }: { error: unknown; onRetry?: (
 }
 
 function errorTitle(error: unknown): string {
+  if (recoveryFor(error) === "preferences") return "Check your Namecheap credentials";
   if (error instanceof NamecheapApiError && error.number) return `Namecheap error ${error.number}`;
   return "Could not reach Namecheap";
 }

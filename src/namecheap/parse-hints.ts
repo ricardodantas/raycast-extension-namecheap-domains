@@ -24,3 +24,18 @@ export const ERROR_HINTS: Record<string, string> = {
 
 /** Errors that mean "the address this request came from is not whitelisted". */
 export const WHITELIST_ERROR_NUMBERS = new Set(["1011150", "1017150"]);
+
+/**
+ * Errors that mean a configured value is wrong rather than the network being unhappy. Retrying these
+ * changes nothing; the user has to edit a preference.
+ */
+export const PREFERENCE_ERROR_NUMBERS = new Set([
+  "1010101", // API User missing
+  "1011101", // API User invalid
+  "1010102", // API Key missing
+  "1011102", // API Key invalid, or API access not enabled
+  "1010105", // ClientIp missing
+  "1011105", // ClientIp invalid
+  "1016103", // Username not found
+  "1019103", // Username invalid
+]);

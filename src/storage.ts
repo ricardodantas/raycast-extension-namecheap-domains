@@ -10,17 +10,21 @@ import type { Domain, DomainListType, PricingTable } from "./namecheap/types";
  */
 const cache = new Cache({ namespace: "namecheap-domains" });
 
-/** Namecheap asks API users to cache pricing. It is the same public price list for everyone. */
+/**
+ * Namecheap asks API users to cache pricing, but the response is account-specific: the parser reads
+ * `YourPrice`, which reflects that account's tier. Cached under the scope so switching credentials cannot
+ * quote the previous account's prices.
+ */
 const PRICING_TTL_MS = 24 * 60 * 60 * 1000;
-const pricingKey = (environment: string) => `pricing:${environment}`;
+const pricingKey = (scope: string) => `pricing:${scope}`;
 
 interface Stamped<T> {
   at: number;
   value: T;
 }
 
-export function readPricing(environment: string): PricingTable | undefined {
-  const raw = cache.get(pricingKey(environment));
+export function readPricing(scope: string): PricingTable | undefined {
+  const raw = cache.get(pricingKey(scope));
   if (!raw) return undefined;
   try {
     const entry = JSON.parse(raw) as Stamped<PricingTable>;
@@ -31,12 +35,12 @@ export function readPricing(environment: string): PricingTable | undefined {
   }
 }
 
-export function writePricing(environment: string, value: PricingTable): void {
-  cache.set(pricingKey(environment), JSON.stringify({ at: Date.now(), value } satisfies Stamped<PricingTable>));
+export function writePricing(scope: string, value: PricingTable): void {
+  cache.set(pricingKey(scope), JSON.stringify({ at: Date.now(), value } satisfies Stamped<PricingTable>));
 }
 
-export function clearPricing(environment: string): void {
-  cache.remove(pricingKey(environment));
+export function clearPricing(scope: string): void {
+  cache.remove(pricingKey(scope));
 }
 
 /**
@@ -64,20 +68,18 @@ export async function writeClientIp(environment: string, ip: string): Promise<vo
 
 /**
  * The last domain list that loaded, so the command can still show something when a refresh fails. This is the
- * user's own portfolio, so it is encrypted and never written to the plaintext cache.
+ * user's own portfolio, so it is encrypted, never written to the plaintext cache, and scoped to the account
+ * that fetched it: pointing the extension at a different account must never surface the previous one's domains.
  */
-const snapshotKey = (environment: string, listType: DomainListType) => `domains:${environment}:${listType}`;
+const snapshotKey = (scope: string, listType: DomainListType) => `domains:${scope}:${listType}`;
 
 export interface DomainSnapshot {
   domains: Domain[];
   at: number;
 }
 
-export async function readDomainSnapshot(
-  environment: string,
-  listType: DomainListType,
-): Promise<DomainSnapshot | undefined> {
-  const raw = await LocalStorage.getItem<string>(snapshotKey(environment, listType));
+export async function readDomainSnapshot(scope: string, listType: DomainListType): Promise<DomainSnapshot | undefined> {
+  const raw = await LocalStorage.getItem<string>(snapshotKey(scope, listType));
   if (!raw) return undefined;
   try {
     const entry = JSON.parse(raw) as Stamped<Domain[]>;
@@ -88,12 +90,8 @@ export async function readDomainSnapshot(
   }
 }
 
-export async function writeDomainSnapshot(
-  environment: string,
-  listType: DomainListType,
-  domains: Domain[],
-): Promise<void> {
-  await LocalStorage.setItem(snapshotKey(environment, listType), JSON.stringify({ at: Date.now(), value: domains }));
+export async function writeDomainSnapshot(scope: string, listType: DomainListType, domains: Domain[]): Promise<void> {
+  await LocalStorage.setItem(snapshotKey(scope, listType), JSON.stringify({ at: Date.now(), value: domains }));
 }
 
 /** Removes everything this extension has stored: the encrypted store and the public pricing cache. */
