@@ -1,4 +1,4 @@
-# Namecheap Domains
+# Raycast extension: Namecheap Domains
 
 Manage your [Namecheap](https://www.namecheap.com/) domains from [Raycast](https://raycast.com/): list what you own, check whether a name is available, and start a registration.
 
