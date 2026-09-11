@@ -1,5 +1,12 @@
 # Namecheap Domains Changelog
 
+## [Pricing and Privacy Fixes] - 2026-09-11
+
+- Fixed pricing never loading: live responses label the product type "domains", where the documentation example says "DOMAIN"
+- Fixed domains being quoted at $0.00 when Namecheap returns an empty or zero Price alongside a real YourPrice or RegularPrice
+- Domain names are no longer sent to a favicon service, so nothing about your portfolio leaves the machine
+- Clear Stored Data is now reachable from every command, not only from error screens
+
 ## [Safety and Setup] - 2026-09-11
 
 - API requests now use POST, so the API key is no longer placed in a URL where a proxy or CDN could log it
