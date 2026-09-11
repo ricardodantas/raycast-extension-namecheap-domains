@@ -62,7 +62,7 @@ The address changes when you switch network or turn on a VPN, which breaks API a
 - **What you search for** in Check Domain Availability stays in memory for the session and is not written to disk.
 - **TLD pricing** is cached on disk for a day, as Namecheap asks API users to do. It is the same public price list for everyone.
 - **Your public IP** is looked up from `api.ipify.org`, falling back to `checkip.amazonaws.com`, when the Client IP preference is blank. Those services receive nothing but the request itself. Set the preference to skip the lookup entirely.
-- Nothing is sent anywhere else. There is no analytics or telemetry.
+- **Nothing else leaves your machine.** There is no analytics or telemetry, and domain names are not sent to any favicon or preview service.
 
 **Clear Stored Data** in any command's action panel wipes all of it.
 
@@ -88,7 +88,7 @@ NC_API_USER=youruser NC_API_KEY=yourkey NC_SANDBOX=1 npm run smoke -- pricing co
 npm run smoke -- ip   # prints the public IPv4 the extension would send
 ```
 
-Before submitting to the Raycast Store, replace `assets/icon.png` (a generated placeholder) with a final 512×512 icon and add screenshots under `metadata/`.
+Before submitting to the Raycast Store, add screenshots under `metadata/`.
 
 ## About
 

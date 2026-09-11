@@ -164,12 +164,25 @@ export function parseDomainCheck(body: Rec): DomainCheckResult[] {
   }));
 }
 
+/**
+ * Namecheap emits rows like Price="0.0" or Price="" that still carry a real figure in YourPrice or
+ * RegularPrice. Taking the first value that is present would quote those domains at nothing.
+ */
+function firstPositive(...values: unknown[]): number | undefined {
+  for (const value of values) {
+    const parsed = toNumber(value, NaN);
+    if (Number.isFinite(parsed) && parsed > 0) return parsed;
+  }
+  return undefined;
+}
+
 /** Builds a TLD → pricing table from a users.getPricing response, restricted to one action (REGISTER by default). */
 export function parsePricing(body: Rec, action = "REGISTER"): PricingTable {
   const table: PricingTable = {};
   const result = isRec(body.UserGetPricingResult) ? body.UserGetPricingResult : {};
   for (const productType of asArray<Rec>(result.ProductType)) {
-    if (str(productType.Name).toUpperCase() !== "DOMAIN") continue;
+    // Live responses say Name="domains"; the documentation example says "DOMAIN". Accept both.
+    if (!/^domains?$/i.test(str(productType.Name).trim())) continue;
     for (const category of asArray<Rec>(productType.ProductCategory)) {
       if (str(category.Name).toUpperCase() !== action.toUpperCase()) continue;
       for (const product of asArray<Rec>(category.Product)) {
@@ -180,10 +193,10 @@ export function parsePricing(body: Rec, action = "REGISTER"): PricingTable {
           if (str(price.DurationType, "YEAR").toUpperCase() !== "YEAR") continue;
           const years = toNumber(price.Duration, 0);
           if (years <= 0) continue;
-          const final = toNumber(price.Price, toNumber(price.YourPrice, NaN));
-          if (Number.isFinite(final)) entry.byYears[years] = final;
-          const regular = toNumber(price.RegularPrice, NaN);
-          if (Number.isFinite(regular)) entry.regularByYears[years] = regular;
+          const effective = firstPositive(price.Price, price.YourPrice, price.RegularPrice);
+          if (effective !== undefined) entry.byYears[years] = effective;
+          const regular = firstPositive(price.RegularPrice);
+          if (regular !== undefined) entry.regularByYears[years] = regular;
           const currency = str(price.Currency).trim();
           if (currency) entry.currency = currency.toUpperCase();
         }

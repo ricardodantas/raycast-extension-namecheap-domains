@@ -1,10 +1,20 @@
-import { Action, ActionPanel, Color, Icon, Keyboard, List, openExtensionPreferences } from "@raycast/api";
-import { getFavicon } from "@raycast/utils";
+import {
+  Action,
+  ActionPanel,
+  Color,
+  Icon,
+  Keyboard,
+  List,
+  Toast,
+  openExtensionPreferences,
+  showToast,
+} from "@raycast/api";
 import { errorMessage } from "./errors";
 import { useMemo, useState } from "react";
 import { useDomains } from "./hooks";
 import { advancedDnsUrl, DOMAIN_LIST_URL, managementUrl, websiteUrl, whoisUrl } from "./namecheap/urls";
 import { isWhitelistError, SetupActions, SetupEmptyView, useWhitelistIp } from "./setup";
+import { clearStoredData } from "./storage";
 import type { Domain, DomainListType } from "./namecheap/types";
 
 const LIST_TYPES: { value: DomainListType; title: string; icon: Icon }[] = [
@@ -183,6 +193,15 @@ export default function ListDomains() {
         shortcut={{ modifiers: ["cmd", "shift"], key: "," }}
         onAction={openExtensionPreferences}
       />
+      <Action
+        title="Clear Stored Data"
+        icon={Icon.Trash}
+        style={Action.Style.Destructive}
+        onAction={async () => {
+          await clearStoredData();
+          await showToast({ style: Toast.Style.Success, title: "Cleared stored data" });
+        }}
+      />
     </ActionPanel.Section>
   );
 
@@ -221,7 +240,8 @@ export default function ListDomains() {
       {sorted.map((domain) => (
         <List.Item
           key={domain.id || domain.name}
-          icon={getFavicon(websiteUrl(domain.name), { fallback: Icon.Globe })}
+          // A favicon lookup would send every domain the user owns to a third-party service on each render.
+          icon={Icon.Globe}
           title={domain.name}
           subtitle={showingDetail ? undefined : domain.isExpired ? "Expired" : undefined}
           accessories={showingDetail ? undefined : accessoriesFor(domain)}

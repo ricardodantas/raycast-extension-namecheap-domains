@@ -2,11 +2,13 @@ import {
   Action,
   ActionPanel,
   Color,
-  getPreferenceValues,
   Icon,
   Keyboard,
   List,
+  Toast,
+  getPreferenceValues,
   openExtensionPreferences,
+  showToast,
 } from "@raycast/api";
 import { useMemo, useState } from "react";
 import { useAvailability, usePricing } from "./hooks";
@@ -14,6 +16,7 @@ import { buildCandidates, parseTldList } from "./domain/normalize";
 import { priceForDomain, priceLabel } from "./domain/price";
 import { registrationUrl, websiteUrl, whoisUrl } from "./namecheap/urls";
 import { SetupEmptyView } from "./setup";
+import { clearStoredData } from "./storage";
 import { RegisterDomainForm } from "./register-domain";
 import type { DomainCheckResult, PricingTable } from "./namecheap/types";
 import { useDebouncedValue } from "./use-debounced-value";
@@ -93,6 +96,15 @@ export default function CheckAvailability() {
         icon={Icon.Gear}
         shortcut={{ modifiers: ["cmd", "shift"], key: "," }}
         onAction={openExtensionPreferences}
+      />
+      <Action
+        title="Clear Stored Data"
+        icon={Icon.Trash}
+        style={Action.Style.Destructive}
+        onAction={async () => {
+          await clearStoredData();
+          await showToast({ style: Toast.Style.Success, title: "Cleared stored data" });
+        }}
       />
     </ActionPanel.Section>
   );
