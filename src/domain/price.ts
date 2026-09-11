@@ -7,8 +7,13 @@ export interface DomainPrice {
   /** Namecheap's regular price, when it is higher than the current one. */
   regular?: number;
   premium: boolean;
-  /** ICANN fee, already excluded from `amount`. */
+  /** ICANN's per-domain fee. Namecheap quotes it separately, so it is NOT part of `amount`. */
   icannFee: number;
+  /**
+   * Early Access Program fee. A new TLD can carry one for the first days of general availability, and it
+   * dwarfs the registration price, so a quote that ignores it is badly wrong rather than slightly wrong.
+   */
+  eapFee: number;
 }
 
 export function formatPrice(amount: number, currency = "USD"): string {
@@ -38,7 +43,13 @@ export function priceForDomain(
   const currency = entry?.currency ?? "USD";
 
   if (check?.isPremium && check.premiumRegistrationPrice > 0) {
-    return { amount: check.premiumRegistrationPrice, currency, premium: true, icannFee: check.icannFee };
+    return {
+      amount: check.premiumRegistrationPrice,
+      currency,
+      premium: true,
+      icannFee: check.icannFee,
+      eapFee: check.eapFee,
+    };
   }
 
   const amount = entry?.byYears[years];
@@ -50,7 +61,22 @@ export function priceForDomain(
     regular: regular !== undefined && regular > amount ? regular : undefined,
     premium: false,
     icannFee: check?.icannFee ?? 0,
+    eapFee: check?.eapFee ?? 0,
   };
+}
+
+/** True when a fee applies that `amount` does not include. */
+export const hasExtraFees = (price: DomainPrice): boolean => price.icannFee > 0 || price.eapFee > 0;
+
+/** What the first term actually costs, fees included. */
+export const totalFirstTerm = (price: DomainPrice): number => price.amount + price.icannFee + price.eapFee;
+
+/** Spells out the fees `amount` leaves out, so no quote reads as the final figure when it is not. */
+export function feeNote(price: DomainPrice): string {
+  const parts: string[] = [];
+  if (price.icannFee > 0) parts.push(`${formatPrice(price.icannFee, price.currency)} ICANN fee`);
+  if (price.eapFee > 0) parts.push(`${formatPrice(price.eapFee, price.currency)} early access fee`);
+  return parts.length ? `plus ${parts.join(" and ")}` : "";
 }
 
 /**

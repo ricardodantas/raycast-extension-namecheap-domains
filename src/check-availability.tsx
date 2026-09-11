@@ -13,8 +13,9 @@ import {
 import { useMemo, useState } from "react";
 import { useAvailability, usePricing } from "./hooks";
 import { buildCandidates, parseTldList } from "./domain/normalize";
-import { priceForDomain, priceLabel } from "./domain/price";
+import { feeNote, hasExtraFees, priceForDomain, priceLabel } from "./domain/price";
 import { registrationUrl, websiteUrl, whoisUrl } from "./namecheap/urls";
+import { isSandbox } from "./preferences";
 import { SetupEmptyView } from "./setup";
 import { clearStoredData } from "./storage";
 import { RegisterDomainForm } from "./register-domain";
@@ -39,14 +40,25 @@ function accessoriesFor(result: DomainCheckResult, pricing: PricingTable): List.
     if (result.isPremium) {
       accessories.push({ tag: { value: "Premium", color: Color.Purple }, tooltip: "Premium domain" });
     }
-    if (price) {
+    if (price?.eapFee) {
+      // An early-access fee can be orders of magnitude above the registration price, so quoting the
+      // registration price alone would mislead rather than merely round.
       accessories.push({
-        text: priceLabel(price, 1),
+        tag: { value: "Early access", color: Color.Orange },
+        tooltip: `This TLD is in its Early Access Program. ${feeNote(price)}. The real cost is shown at checkout.`,
+      });
+      accessories.push({ text: "Price at checkout", icon: Icon.Coins });
+    } else if (price) {
+      const notes = [
+        price.regular !== undefined
+          ? `Regular price ${priceLabel({ ...price, amount: price.regular, regular: undefined }, 1)}`
+          : "Registration price from your Namecheap pricing",
+        hasExtraFees(price) ? feeNote(price) : "",
+      ].filter(Boolean);
+      accessories.push({
+        text: hasExtraFees(price) ? `${priceLabel(price, 1)}+` : priceLabel(price, 1),
         icon: Icon.Coins,
-        tooltip:
-          price.regular !== undefined
-            ? `Regular price ${priceLabel({ ...price, amount: price.regular, regular: undefined }, 1)}`
-            : "Registration price from your Namecheap pricing",
+        tooltip: notes.join(". "),
       });
     }
     accessories.push({ tag: { value: "Available", color: Color.Green } });
@@ -58,6 +70,7 @@ function accessoriesFor(result: DomainCheckResult, pricing: PricingTable): List.
 }
 
 export default function CheckAvailability() {
+  const sandbox = isSandbox();
   const [searchText, setSearchText] = useState("");
   const debouncedSearch = useDebouncedValue(searchText, SEARCH_DEBOUNCE_MS);
 
@@ -133,7 +146,7 @@ export default function CheckAvailability() {
                   <Action.OpenInBrowser
                     title="Register on Namecheap"
                     icon={Icon.Cart}
-                    url={registrationUrl(result.domain)}
+                    url={registrationUrl(result.domain, sandbox)}
                   />
                   <Action.Push
                     title="Check Price and Register…"
@@ -148,7 +161,7 @@ export default function CheckAvailability() {
                   <Action.OpenInBrowser
                     title="Look up Whois"
                     icon={Icon.MagnifyingGlass}
-                    url={whoisUrl(result.domain)}
+                    url={whoisUrl(result.domain, sandbox)}
                     shortcut={{ modifiers: ["cmd", "shift"], key: "w" }}
                   />
                 </>
@@ -168,6 +181,7 @@ export default function CheckAvailability() {
 
   return (
     <List
+      navigationTitle={sandbox ? "Check Domain Availability (Sandbox)" : undefined}
       isLoading={isLoading || isLoadingPricing || searchText !== debouncedSearch}
       onSearchTextChange={setSearchText}
       searchBarPlaceholder="acme or acme.com"

@@ -2,7 +2,7 @@
   "$schema": "https://www.raycast.com/schemas/extension.json",
   "name": "namecheap-domains",
   "title": "Namecheap Domains",
-  "description": "List your Namecheap domains, check domain availability with pricing, and start a registration from Raycast",
+  "description": "Search for available domains with live Namecheap pricing, start a registration, and browse the domains in your Namecheap account",
   "icon": "icon.png",
   "author": "ricardodantas",
   "categories": [
@@ -65,17 +65,10 @@
   ],
   "commands": [
     {
-      "name": "list-domains",
-      "title": "List Domains",
-      "subtitle": "Namecheap",
-      "description": "Browse the domains in your Namecheap account and open their management pages",
-      "mode": "view"
-    },
-    {
       "name": "check-availability",
       "title": "Check Domain Availability",
       "subtitle": "Namecheap",
-      "description": "Check whether a domain or keyword is available to register, with registration pricing",
+      "description": "Check whether a domain or keyword is available, with Namecheap registration pricing",
       "mode": "view",
       "preferences": [
         {
@@ -103,6 +96,13 @@
           "required": false
         }
       ]
+    },
+    {
+      "name": "list-domains",
+      "title": "My Domains",
+      "subtitle": "Namecheap",
+      "description": "Browse the domains in your Namecheap account and open their management pages",
+      "mode": "view"
     }
   ],
   "dependencies": {

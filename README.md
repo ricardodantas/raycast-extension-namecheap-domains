@@ -6,9 +6,9 @@ Manage your [Namecheap](https://www.namecheap.com/) domains from [Raycast](https
 
 | Command | What it does |
 | --- | --- |
-| **List Domains** | Lists every domain in your account with expiry date, auto-renew, privacy and lock status. Press **Enter** to open the domain's management page on namecheap.com. Filter by All / Expiring / Expired. |
-| **Check Domain Availability** | Type a full domain (`acme.com`) to check it, or a bare keyword (`acme`) to check it against your default TLDs in one call. Shows the first-year registration price, flags premium names, and lets you jump straight to registration. |
+| **Check Domain Availability** | Type a full domain (`acme.com`) to check it, or a bare keyword (`acme`) to check it against your default TLDs in one call. Shows the registration price, flags premium and early-access names, and lets you jump straight to registration. |
 | **Register Domain** | Enter a domain and term, the extension verifies availability and price through the API, then opens Namecheap checkout in your browser. |
+| **My Domains** | Lists every domain in your account with expiry date, auto-renew, privacy and lock status. Press **Enter** to open the domain's management page. Filter by All / Expiring / Expired. |
 
 Registration itself happens on namecheap.com. The extension never charges your account balance.
 
@@ -44,7 +44,7 @@ The address changes when you switch network or turn on a VPN, which breaks API a
 | API Key | yes | From Profile › Tools › Namecheap API Access |
 | Username | no | Account the commands run against. Defaults to API User |
 | Client IP | no | Fills the ClientIp API parameter. Blank = auto-detect. Not the whitelist |
-| Use the Namecheap Sandbox | no | Targets `api.sandbox.namecheap.com` |
+| Use the Namecheap Sandbox | no | Targets `api.sandbox.namecheap.com`. Every link stays on the sandbox hosts, and each command's title is marked (Sandbox) |
 | Default TLDs (Check Domain Availability) | no | Comma-separated list used when you type a keyword. Default: `com, net, org, io, dev, app, ai, co` |
 
 ## Good to know
@@ -52,7 +52,7 @@ The address changes when you switch network or turn on a VPN, which breaks API a
 - **Rate limits.** Namecheap allows 50 calls/minute, 700/hour and 8000/day per API key. Availability checks are debounced and batched (up to 50 domains per call); pricing is cached for 24 hours as Namecheap recommends. Use **Refresh Pricing** in Check Domain Availability to force a refresh.
 - **Internationalized domains** are converted to punycode before they are sent, as the API requires.
 - **Premium domains** show the premium registration price returned by Namecheap instead of the standard TLD price.
-- **Prices** come from `users.getPricing` and reflect your account's pricing. The final amount, coupons and ICANN fees are confirmed at checkout.
+- **Prices** come from `users.getPricing` and reflect your account's pricing. A price followed by `+` has an ICANN fee on top, shown in the tooltip and spelled out before checkout. Names in a TLD's Early Access Program show "Price at checkout" rather than a figure, because the access fee dwarfs the registration price.
 - Some TLDs (for example `.us`, `.eu`, `.ca`, `.co.uk`, `.de`, `.fr`) need extra registrant details. Namecheap collects those during web checkout.
 
 ## What the extension stores and sends
@@ -64,7 +64,7 @@ The address changes when you switch network or turn on a VPN, which breaks API a
 - **Your public IP** is looked up from `api.ipify.org`, falling back to `checkip.amazonaws.com`, when the Client IP preference is blank. Those services receive nothing but the request itself. Set the preference to skip the lookup entirely.
 - **Nothing else leaves your machine.** There is no analytics or telemetry, and domain names are not sent to any favicon or preview service.
 
-**Clear Stored Data**, in the action panel of List Domains or Check Domain Availability, wipes all of it.
+**Clear Stored Data**, in the action panel of My Domains or Check Domain Availability, wipes all of it.
 
 The extension never spends money. Registration always finishes in your browser on namecheap.com, and no command calls Namecheap's purchase endpoints.
 

@@ -12,7 +12,8 @@ import {
 import { errorMessage } from "./errors";
 import { useMemo, useState } from "react";
 import { useDomains } from "./hooks";
-import { advancedDnsUrl, DOMAIN_LIST_URL, managementUrl, websiteUrl, whoisUrl } from "./namecheap/urls";
+import { isSandbox } from "./preferences";
+import { advancedDnsUrl, domainListUrl, managementUrl, websiteUrl, whoisUrl } from "./namecheap/urls";
 import { isWhitelistError, SetupActions, SetupEmptyView, useWhitelistIp } from "./setup";
 import { clearStoredData } from "./storage";
 import type { Domain, DomainListType } from "./namecheap/types";
@@ -74,7 +75,7 @@ function accessoriesFor(domain: Domain): List.Item.Accessory[] {
   return accessories;
 }
 
-function DomainDetail({ domain }: { domain: Domain }) {
+function DomainDetail({ domain, sandbox }: { domain: Domain; sandbox: boolean }) {
   const days = daysUntil(domain.expires);
   const expiryText = domain.isExpired
     ? "Expired"
@@ -113,17 +114,17 @@ function DomainDetail({ domain }: { domain: Domain }) {
           />
           <List.Item.Detail.Metadata.Label title="Premium" text={domain.isPremium ? "Yes" : "No"} />
           <List.Item.Detail.Metadata.Separator />
-          <List.Item.Detail.Metadata.Link title="Manage" target={managementUrl(domain.name)} text="Namecheap panel" />
+          <List.Item.Detail.Metadata.Link
+            title="Manage"
+            target={managementUrl(domain.name, sandbox)}
+            text="Namecheap panel"
+          />
         </List.Item.Detail.Metadata>
       }
     />
   );
 }
 
-/**
- * Shown above a cached list when a refresh fails. Without it the stale domains stay on screen with no
- * indication that anything is wrong, because List.EmptyView only renders when the list is empty.
- */
 /** "Showing the list from 2 hours ago", so a snapshot is never mistaken for live data. */
 function describeSnapshot(at?: number): string {
   if (!at) return "Showing the last list that loaded.";
@@ -135,6 +136,10 @@ function describeSnapshot(at?: number): string {
   return `Showing the list from ${days} day${days === 1 ? "" : "s"} ago.`;
 }
 
+/**
+ * Shown above a cached list when a refresh fails. Without it the stale domains stay on screen with no
+ * indication that anything is wrong, because List.EmptyView only renders when the list is empty.
+ */
 function ConnectionBanner({ error, onRetry, staleAt }: { error: unknown; onRetry: () => void; staleAt?: number }) {
   const { ip } = useWhitelistIp(error);
   const whitelist = isWhitelistError(error);
@@ -157,6 +162,7 @@ function ConnectionBanner({ error, onRetry, staleAt }: { error: unknown; onRetry
 }
 
 export default function ListDomains() {
+  const sandbox = isSandbox();
   const [listType, setListType] = useState<DomainListType>("ALL");
   const [showingDetail, setShowingDetail] = useState(false);
   const { data: domains, isLoading, error, revalidate, staleAt } = useDomains(listType);
@@ -183,7 +189,7 @@ export default function ListDomains() {
       />
       <Action.OpenInBrowser
         title="Open Domain List on Namecheap"
-        url={DOMAIN_LIST_URL}
+        url={domainListUrl(sandbox)}
         icon={Icon.AppWindowList}
         shortcut={{ modifiers: ["cmd", "shift"], key: "l" }}
       />
@@ -207,6 +213,7 @@ export default function ListDomains() {
 
   return (
     <List
+      navigationTitle={sandbox ? "My Domains (Sandbox)" : undefined}
       isLoading={isLoading}
       isShowingDetail={showingDetail && sorted.length > 0}
       searchBarPlaceholder="Filter your domains…"
@@ -245,19 +252,19 @@ export default function ListDomains() {
           title={domain.name}
           subtitle={showingDetail ? undefined : domain.isExpired ? "Expired" : undefined}
           accessories={showingDetail ? undefined : accessoriesFor(domain)}
-          detail={<DomainDetail domain={domain} />}
+          detail={<DomainDetail domain={domain} sandbox={sandbox} />}
           actions={
             <ActionPanel>
               <ActionPanel.Section>
                 <Action.OpenInBrowser
                   title="Open Domain Management"
                   icon={Icon.Gear}
-                  url={managementUrl(domain.name)}
+                  url={managementUrl(domain.name, sandbox)}
                 />
                 <Action.OpenInBrowser
                   title="Open Advanced DNS"
                   icon={Icon.Network}
-                  url={advancedDnsUrl(domain.name)}
+                  url={advancedDnsUrl(domain.name, sandbox)}
                   shortcut={{ modifiers: ["cmd"], key: "d" }}
                 />
                 <Action.OpenInBrowser
@@ -269,7 +276,7 @@ export default function ListDomains() {
                 <Action.OpenInBrowser
                   title="Look up Whois"
                   icon={Icon.MagnifyingGlass}
-                  url={whoisUrl(domain.name)}
+                  url={whoisUrl(domain.name, sandbox)}
                   shortcut={{ modifiers: ["cmd", "shift"], key: "w" }}
                 />
                 <Action.CopyToClipboard

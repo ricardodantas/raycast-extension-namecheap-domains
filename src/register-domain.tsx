@@ -16,9 +16,9 @@ import {
 import { FormValidation, useForm } from "@raycast/utils";
 import { useState } from "react";
 import { showNamecheapError } from "./errors";
-import { priceForDomain, priceLabel } from "./domain/price";
+import { feeNote, formatPrice, hasExtraFees, priceForDomain, priceLabel, totalFirstTerm } from "./domain/price";
 import { isValidDomain, normalizeInput } from "./domain/normalize";
-import { getClient, getPricing } from "./preferences";
+import { getClient, getPricing, isSandbox } from "./preferences";
 import { registrationUrl, whoisUrl } from "./namecheap/urls";
 
 const TERMS = [1, 2, 3, 5, 10];
@@ -69,7 +69,7 @@ export function RegisterDomainForm({ initialDomain = "" }: { initialDomain?: str
           toast.primaryAction = {
             title: "Look up Whois",
             onAction: () => {
-              open(whoisUrl(domain));
+              open(whoisUrl(domain, isSandbox()));
             },
           };
           return;
@@ -77,7 +77,13 @@ export function RegisterDomainForm({ initialDomain = "" }: { initialDomain?: str
 
         const pricing = await getPricing().catch(() => ({}));
         const price = priceForDomain(domain, pricing, years, check);
-        const priceLine = price ? priceLabel(price, years) : "Price shown at checkout";
+        const priceLine = !price
+          ? "Namecheap has not quoted a price for this TLD. The price is shown at checkout."
+          : price.eapFee > 0
+            ? `This TLD is in its Early Access Program, ${feeNote(price)}. The real cost is shown at checkout.`
+            : hasExtraFees(price)
+              ? `${priceLabel(price, years)}, ${feeNote(price)}. First term about ${formatPrice(totalFirstTerm(price), price.currency)}.`
+              : priceLabel(price, years);
 
         toast.hide();
 
@@ -91,7 +97,7 @@ export function RegisterDomainForm({ initialDomain = "" }: { initialDomain?: str
 
         if (!confirmed) return;
 
-        await open(registrationUrl(domain));
+        await open(registrationUrl(domain, isSandbox()));
         await showToast({ style: Toast.Style.Success, title: `Opened checkout for ${domain}` });
         await popToRoot();
       } catch (error) {
@@ -107,7 +113,7 @@ export function RegisterDomainForm({ initialDomain = "" }: { initialDomain?: str
   return (
     <Form
       isLoading={isChecking}
-      navigationTitle="Register Domain"
+      navigationTitle={isSandbox() ? "Register Domain (Sandbox)" : "Register Domain"}
       actions={
         <ActionPanel>
           <Action.SubmitForm title="Check and Continue" icon={Icon.Cart} onSubmit={handleSubmit} />
@@ -115,7 +121,7 @@ export function RegisterDomainForm({ initialDomain = "" }: { initialDomain?: str
             <Action.OpenInBrowser
               title="Open on Namecheap Without Checking"
               icon={Icon.Globe}
-              url={registrationUrl(domainPreview)}
+              url={registrationUrl(domainPreview, isSandbox())}
               shortcut={Keyboard.Shortcut.Common.OpenWith}
             />
           ) : null}
