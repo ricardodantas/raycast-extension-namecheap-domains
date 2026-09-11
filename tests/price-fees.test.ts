@@ -21,6 +21,32 @@ const check = (over: Partial<DomainCheckResult> = {}): DomainCheckResult => ({
   ...over,
 });
 
+describe("term pricing", () => {
+  // Namecheap's price row for a term is the total for that term. The upstream fixture has .com at 8.88 for
+  // one year and 17.76 for two, so labelling the two-year figure per-year would imply double the real cost.
+  it("labels a single year as a yearly rate", () => {
+    const price = priceForDomain("acme.com", pricing, 1, check());
+    assert.ok(price);
+    assert.equal(priceLabel(price, 1), "$10.98/yr");
+  });
+
+  it("labels a multi-year term as a total, never per year", () => {
+    const price = priceForDomain("acme.com", pricing, 2, check());
+    assert.ok(price);
+    const label = priceLabel(price, 2);
+    assert.equal(label, "$12.50 total for 2 years");
+    assert.doesNotMatch(label, /\/yr/);
+  });
+
+  it("uses the term row rather than multiplying the one-year price", () => {
+    const oneYear = priceForDomain("acme.com", pricing, 1, check());
+    const twoYear = priceForDomain("acme.com", pricing, 2, check());
+    assert.ok(oneYear && twoYear);
+    assert.equal(twoYear.amount, 12.5);
+    assert.notEqual(twoYear.amount, oneYear.amount * 2);
+  });
+});
+
 describe("fees that Namecheap charges on top of the registration price", () => {
   it("reports no extra fees when there are none", () => {
     const price = priceForDomain("acme.com", pricing, 1, check());

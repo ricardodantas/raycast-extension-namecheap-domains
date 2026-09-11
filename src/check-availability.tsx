@@ -152,7 +152,6 @@ export default function CheckAvailability() {
                     title="Check Price and Register…"
                     icon={Icon.Receipt}
                     target={<RegisterDomainForm initialDomain={result.domain} />}
-                    shortcut={Keyboard.Shortcut.Common.Refresh}
                   />
                 </>
               ) : (

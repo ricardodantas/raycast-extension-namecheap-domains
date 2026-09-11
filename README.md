@@ -64,7 +64,7 @@ The address changes when you switch network or turn on a VPN, which breaks API a
 - **Your public IP** is looked up from `api.ipify.org`, falling back to `checkip.amazonaws.com`, when the Client IP preference is blank. Those services receive nothing but the request itself. Set the preference to skip the lookup entirely.
 - **Nothing else leaves your machine.** There is no analytics or telemetry, and domain names are not sent to any favicon or preview service.
 
-**Clear Stored Data**, in the action panel of My Domains or Check Domain Availability, wipes all of it.
+**Clear Stored Data**, in the action panel of My Domains or Check Domain Availability, removes the domain snapshot, the detected IP and the pricing cache. It does not touch your API key, which lives in Raycast's preferences; clear that field yourself when rotating a key or handing on a Mac.
 
 The extension never spends money. Registration always finishes in your browser on namecheap.com, and no command calls Namecheap's purchase endpoints.
 
@@ -88,7 +88,6 @@ NC_API_USER=youruser NC_API_KEY=yourkey NC_SANDBOX=1 npm run smoke -- pricing co
 npm run smoke -- ip   # prints the public IPv4 the extension would send
 ```
 
-Before submitting to the Raycast Store, add screenshots under `metadata/`.
 
 ## About
 

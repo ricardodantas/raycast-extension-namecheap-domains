@@ -80,11 +80,14 @@ export function feeNote(price: DomainPrice): string {
 }
 
 /**
- * Human label for a price. Namecheap quotes a per-year rate for each term, so a multi-year
- * term reads as a yearly rate; the exact total is confirmed at checkout.
+ * Human label for a price.
+ *
+ * Namecheap's price row for a term is the TOTAL for that term, not a yearly rate: .com comes back as 8.88
+ * for one year and 17.76 for two. Labelling the two-year figure "per year" would imply double the real cost,
+ * so a multi-year term reads as a total.
  */
 export function priceLabel(price: DomainPrice, years: number): string {
   const formatted = formatPrice(price.amount, price.currency);
   if (price.premium) return `${formatted} premium`;
-  return years === 1 ? `${formatted}/yr` : `${formatted}/yr for ${years} years`;
+  return years === 1 ? `${formatted}/yr` : `${formatted} total for ${years} years`;
 }
